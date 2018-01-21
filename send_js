@@ -1,0 +1,54 @@
+makeblob = function (dataURL) {
+    var BASE64_MARKER = ';base64,';
+    if (dataURL.indexOf(BASE64_MARKER) == -1) {
+        var parts = dataURL.split(',');
+        var contentType = parts[0].split(':')[1];
+        var raw = decodeURIComponent(parts[1]);
+        return new Blob([raw], { type: contentType });
+    }
+    var parts = dataURL.split(BASE64_MARKER);
+    var contentType = parts[0].split(':')[1];
+    var raw = window.atob(parts[1]);
+    var rawLength = raw.length;
+
+    var uInt8Array = new Uint8Array(rawLength);
+
+    for (var i = 0; i < rawLength; ++i) {
+        uInt8Array[i] = raw.charCodeAt(i);
+    }
+
+    return new Blob([uInt8Array], { type: contentType });
+}
+
+function readBody(xhr) {
+    var data;
+    if (!xhr.responseType || xhr.responseType === "text") {
+        data = xhr.responseText;
+    } else if (xhr.responseType === "document") {
+        data = xhr.responseXML;
+    } else {
+        data = xhr.response;
+    }
+    return data;
+}
+
+var url = "https://westus.api.cognitive.microsoft.com/emotion/v1.0/recognize?";
+var xhr = new XMLHttpRequest();
+
+xhr.onreadystatechange = function() {//Call a function when the state changes.
+    if(xhr.readyState == XMLHttpRequest.DONE && xhr.status == 200) {
+        console.log("Hello");
+        console.log(readBody(xhr));
+    }
+    
+}
+
+xhr.open("POST", url, true);
+
+//xhr.setRequestHeader("Content-Type","application/json");
+xhr.setRequestHeader("Content-Type","application/octet-stream");
+xhr.setRequestHeader("Ocp-Apim-Subscription-Key","9b739742ca8a43758d41b369f2b91669");
+
+var blob = makeblob(canvas.toDataURL());
+
+xhr.send(blob);
