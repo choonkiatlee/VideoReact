@@ -142,15 +142,15 @@ function activateVideo2(){
 
     var popup_tab_id = -1;
 
-    console.log(chrome.extension.getURL('camera.html'));
+    console.log(chrome.extension.getURL('Website_eg/index.html'));
 
 
     
     chrome.windows.create({
-      url: chrome.extension.getURL('camera.html'),
+      url: chrome.extension.getURL('Website_eg/index.html'),
       type: "popup",
       width: 500,
-      height: 500
+      height: 550
     },function (window) {
       
       popup_tab_id = window.tabs[0].id
