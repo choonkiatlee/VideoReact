@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
             url: "https://westus.api.cognitive.microsoft.com/emotion/v1.0/recognize?",
             beforeSend: function (xhrObj) {
             xhrObj.setRequestHeader("Content-Type", "application/octet-stream");
-            xhrObj.setRequestHeader("Ocp-Apim-Subscription-Key","9b739742ca8a43758d41b369f2b91669");
+            xhrObj.setRequestHeader("Ocp-Apim-Subscription-Key","541dae932f6e49a898a325200dd4866f");
             },
             type: "POST",
             data: file,
@@ -116,7 +116,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 if(last_val != timestamp){
-                    overall_data.push([timestamp,response[0].scores]);
+                    overall_data.push([(timestamp/100),response[0].scores]);
+                    console.log(overall_data);
 
                     angry.push(response[0].scores.anger);
                     happy.push(response[0].scores.happiness);
@@ -130,7 +131,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (dynamic_plot_on){
 
                         if (overall_data.length == 2){
-                            console.log("Hello");
                             displayData();
                         }
                         else if (overall_data.length > 2){
@@ -155,9 +155,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
                                 myChart.update();
                             }
-
-                            
-    
                         }
     
                     }
@@ -194,11 +191,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function makeTimeLabel(dataLength,interval,start_time){
         timeArray = [];
         for (i=0; i<= dataLength; i++){
+            var number = (start_time+i*interval);
             timeArray.push(start_time+i*interval);
         }
-        return timeArray
+        return timeArray;
     }
-    
+
 
     function displayData(){
 
@@ -207,13 +205,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
             for (var i = 1; i < overall_data.length; i++){
                 
-                current_time_interval = overall_data[i][0] = overall_data[i-1][0];
+                current_time_interval = overall_data[i][0] - overall_data[i-1][0];
                 avg_time_interval = (avg_time_interval*(i) + current_time_interval)/(i);
                 console.log(current_time_interval);
             }
 
             myChart.data.labels = makeTimeLabel(overall_data.length,avg_time_interval,overall_data[0][0]);
-            console.log(makeTimeLabel(overall_data.length,avg_time_interval,overall_data[0][0]));
+            console.log(myChart.data.labels);
+
+            for (var i = 1; i< myChart.data.labels.length; i++){
+                myChart.data.labels[i] = parseFloat(myChart.data.labels[i].toFixed(2));
+            }
 
             myChart.data.datasets[0].data = angry;
             myChart.data.datasets[1].data = happy;
