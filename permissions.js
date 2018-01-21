@@ -139,10 +139,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                 displayData();
                             }
                             else{
-                                var next_time = myChart.data.labels[myChart.data.labels.length-1] + myChart.data.labels[1]-myChart.data.labels[0];
-                                console.log(next_time);
+                                //var next_time = myChart.data.labels[myChart.data.labels.length-1] + myChart.data.labels[1]-myChart.data.labels[0];
+                                //console.log(next_time);
 
-                                myChart.data.labels.push(next_time);
+                                myChart.data.labels.push(overall_data[overall_data.length-1][0]);
         
                                 myChart.data.datasets[0].data.push(response[0].scores.anger);
                                 myChart.data.datasets[1].data.push(response[0].scores.happiness);
@@ -203,16 +203,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (overall_data.length >=2){
             var avg_time_interval = 0;
 
+            var time = [];
+
             for (var i = 1; i < overall_data.length; i++){
                 
                 current_time_interval = overall_data[i][0] - overall_data[i-1][0];
                 avg_time_interval = (avg_time_interval*(i) + current_time_interval)/(i);
                 console.log(current_time_interval);
+
+                time.push(overall_data[i][0]);
             }
 
             myChart.data.labels = makeTimeLabel(overall_data.length,avg_time_interval,overall_data[0][0]);
             console.log(myChart.data.labels);
 
+            myChart.data.labels = time;
             for (var i = 1; i< myChart.data.labels.length; i++){
                 myChart.data.labels[i] = parseFloat(myChart.data.labels[i].toFixed(2));
             }
