@@ -19,15 +19,36 @@ if (navigator.getUserMedia) {
   navigator.getUserMedia({ video: true }, handleVideo, videoError);
 }
 
+function saveAsTextFile (data){
+    var textFileAsBlob = new Blob([JSON.stringify(data)], {type:'text/plain'});
+    var fileNameToSaveAs = "output_file";
+      var downloadLink = document.createElement("a");
+    downloadLink.download = fileNameToSaveAs;
+    downloadLink.innerHTML = "Download File";
+    if (window.webkitURL != null)
+    {
+        // Chrome allows the link to be clicked
+        // without actually adding it to the DOM.
+        downloadLink.href = window.webkitURL.createObjectURL(textFileAsBlob);
+    }
+    else
+    {
+        // Firefox requires the link to be added to the DOM
+        // before it can be clicked.
+        downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
+        downloadLink.onclick = destroyClickedElement;
+        downloadLink.style.display = "none";
+        document.body.appendChild(downloadLink);
+    }
 
+    downloadLink.click();
+}
 
-var button = document.createElement("button");
-button.setAttribute("type" , "button");
-//button.setAttribute("onclick", "displayData");
-button.setAttribute("innerHTML", "Click Me");
-button.setAttribute("style","width=50px;");
+var button = document.getElementById("button");
 
-button.addEventListener("click",()=>{displayData();});
+var json_data;
+
+button.addEventListener("click",()=>{saveAsTextFile(json_data);});
 
 //document.getElementById("button_div").appendChild(button);
 
@@ -75,6 +96,7 @@ function postEmotionResult(port,timestamp){
             overall_data.push([timestamp,response[0].scores]);
             //overall_data.push([timestamp,"hello"]);
             console.log(overall_data);
+            json_data = overall_data;
             //port.postMessage({"response":"Done"});
         })
         .fail(function (error) {
@@ -97,27 +119,104 @@ chrome.runtime.onConnect.addListener(function(port) {
     });
 });
 
+function makeTimeLabel(dataLength,interval,isforward){
+    timeArray = [];
+    for (i=0; i<= dataLength; i++){
+            if (i % interval === 0){
+              timeArray.push(i);
+            } else {
+              timeArray.push('');
+            }
+    }
+  
+    if (isforward === false){
+      timeArrayNegative = timeArray.map(
+        (x) => (x === '')?'':x*-1
+      );
+      return timeArrayNegative.reverse();
+  
+    } else {
+      return timeArray
+    }
+  }
+
 
 function displayData(){
 
     var happy = [];
+    var angry = [];
+    var contempt = [];
+    var disgust = [];
+    var fear = [];
+    var neutral = [];
+    var sadness = [];
+    var surprise = [];
+    var avg_time_interval = 0;
 
     for (var i = 0; i < overall_data.length; i++){
-        happy.push({x:overall_data[i][0],y:overall_data[i][1].happiness});
+        angry.push(overall_data[i][1].angriness);
+        happy.push(overall_data[i][1].happiness);
+        contempt.push(overall_data[i][1].contempt);
+        disgust.push(overall_data[i][1].disgust);
+        fear.push(overall_data[i][1].fear);
+        neutral.push(overall_data[i][1].neutral);
+        sadness.push(overall_data[i][1].sadness);
+        surprise.push(overall_data[i][1].surprise);
+        avg_time_interval = (avg_time_interval*i + overall_data[i][0])/(i+1);
     }
 
-    console.log(happy);
 
+    for (var i = 0; i < overall_data.length; i++){
+
+    }
+    
+    
     var config = {
         type: 'line',
         data: {
+            labels: makeTimeLabel(overall_data.length,avg_time_interval,true),
             datasets: [{
-                label: "Happy",
-                backgroundColor: window.chartColors.red,
+                label: "Angriness",
                 borderColor: window.chartColors.red,
                 fill: false,
-                data: [{x:5,y:10},{x:10,y:5},{x:10,y:30}]//happy
-            }]
+                data: angry
+            },{
+                label: "Happiness",
+                borderColor: '#e27fef',
+                fill: false,
+                data: happy
+            },{
+                label: "Contempt",
+                borderColor: '#5cb85c',
+                fill: false,
+                data: contempt
+            },{
+                label: "Disgust",
+                borderColor: "#9500cb",
+                fill: false,
+                data: disgust
+            },{
+                label: "Fear",
+                borderColor:  "#4794ff",
+                fill: false,
+                data: fear
+            },{
+                label: "Neutral",
+                borderColor: "#003b8f",
+                fill: false,
+                data: neutral
+            },{
+                label: "Sadness",
+                borderColor: "#0052C2",
+                fill: false,
+                data: sadness
+            },{
+                label: "Surprise",
+                borderColor: "#f0ad4e",
+                fill: false,
+                data: surprise
+            },
+        ]
         },
         options: {
             responsive: true,
@@ -139,7 +238,7 @@ function displayData(){
                     scaleLabel: {
                         display: true,
                         labelString: 'time'
-                    }
+                    },
                 }],
                 yAxes: [{
                     display: true,
