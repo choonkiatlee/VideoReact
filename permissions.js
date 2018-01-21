@@ -68,6 +68,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     var save_file_btn = document.getElementById("save_file_btn");
     save_file_btn.addEventListener("click",()=>{saveAsTextFile(json_data);});
+
+    var reset_btn = document.getElementById("reset_btn");
+    reset_btn.addEventListener("click",()=>{resetData();});
     
     // Create a canvas element
     var canvas = document.createElement('canvas');
@@ -224,6 +227,25 @@ document.addEventListener('DOMContentLoaded', () => {
             myChart.update();
         }
 
+    }
+
+    function resetData(){
+        myChart.data.labels = [];
+        myChart.data.datasets.forEach((dataset) => {
+            dataset.data = [];
+        });
+
+        overall_data = [];
+        angry = [];
+        happy = [];
+        contempt = [];
+        disgust = [];
+        fear = [];
+        neutral = [];
+        sadness = [];
+        surprise = [];
+
+        myChart.update();
     }
 
     
