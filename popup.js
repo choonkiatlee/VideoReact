@@ -158,7 +158,7 @@ function activateVideo2(){
     });
 
     window.setTimeout(connect_camera,500);
-    window.setInterval(getDataPoint,5000);
+    window.setInterval(getDataPoint,3000);
 
     function connect_camera(){
       console.log(popup_tab_id);

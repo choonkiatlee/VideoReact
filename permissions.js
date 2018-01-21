@@ -1,10 +1,23 @@
+var happy = [];
+var angry = [];
+var contempt = [];
+var disgust = [];
+var fear = [];
+var neutral = [];
+var sadness = [];
+var surprise = [];
+var overall_data = [];
+
+
+var myChart;
+
+var dynamic_plot_on = false;
+
+
+
 document.addEventListener('DOMContentLoaded', () => {
 
     var video_component = document.getElementById("videoElement");
-
-    console.log(video_component);
-
-    var overall_data = [];
 
     function handleVideo(stream) {
         video_component.src = window.URL.createObjectURL(stream);
@@ -49,6 +62,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     var plot_all_btn = document.getElementById("plot_all_btn");
     plot_all_btn.addEventListener("click",()=>{displayData()});
+
+    var plot_dynamic_btn = document.getElementById("plot_dynamic_btn");
+    plot_dynamic_btn.addEventListener("click",()=>{dynamicPlot()});
     
     var save_file_btn = document.getElementById("save_file_btn");
     save_file_btn.addEventListener("click",()=>{saveAsTextFile(json_data);});
@@ -60,6 +76,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Get the drawing context
     var ctx = canvas.getContext('2d');
+
+    //Draw Initial Chart Display
+    initialDisplay();
     
     
     function postEmotionResult(port,timestamp){
@@ -86,15 +105,78 @@ document.addEventListener('DOMContentLoaded', () => {
             processData: false
             })
             .done(function (response) {
+                
+                //Only push data if timestamps are not equal
+                var last_val = 0;
+                if (overall_data.length != 0){
+                    last_val = overall_data[overall_data.length-1];
+                }
+
+                if(last_val != timestamp){
+                    overall_data.push([timestamp,response[0].scores]);
+
+                    angry.push(response[0].scores.anger);
+                    happy.push(response[0].scores.happiness);
+                    contempt.push(response[0].scores.contempt);
+                    disgust.push(response[0].scores.disgust);
+                    fear.push(response[0].scores.fear);
+                    neutral.push(response[0].scores.neutral);
+                    sadness.push(response[0].scores.sadness);
+                    surprise.push(response[0].scores.surprise);
+
+                    if (dynamic_plot_on){
+
+                        if (overall_data.length == 2){
+                            console.log("Hello");
+                            displayData();
+                        }
+                        else if (overall_data.length > 2){
     
-                overall_data.push([timestamp,response[0].scores]);
-                console.log(overall_data);
+                            if ((overall_data.length -1) > myChart.data.datasets[0].data.length || (overall_data.length -1) > myChart.data.labels.length ){
+                                displayData();
+                            }
+                            else{
+                                var next_time = myChart.data.labels[myChart.data.labels.length-1] + myChart.data.labels[1]-myChart.data.labels[0];
+                                console.log(next_time);
+
+                                myChart.data.labels.push(next_time);
+        
+                                myChart.data.datasets[0].data.push(response[0].scores.anger);
+                                myChart.data.datasets[1].data.push(response[0].scores.happiness);
+                                myChart.data.datasets[2].data.push(response[0].scores.contempt);
+                                myChart.data.datasets[3].data.push(response[0].scores.disgust);
+                                myChart.data.datasets[4].data.push(response[0].scores.fear);
+                                myChart.data.datasets[5].data.push(response[0].scores.neutral);
+                                myChart.data.datasets[6].data.push(response[0].scores.sadness);
+                                myChart.data.datasets[7].data.push(response[0].scores.surprise);
+        
+                                myChart.update();
+                            }
+
+                            
+    
+                        }
+    
+                    }
+
+                    console.log(myChart.data.labels);
+                    console.log(overall_data.length);
+
+                    
+                }
+
+                //console.log(overall_data);
                 json_data = overall_data;
+                
             })
             .fail(function (error) {
             console.log("Failure :(");
         });
     
+    }
+
+    function dynamicPlot(){
+        dynamic_plot_on = !dynamic_plot_on;
     }
     
     chrome.runtime.onConnect.addListener(function(port) {
@@ -106,57 +188,55 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
-    function makeTimeLabel(dataLength,interval,isforward){
+    function makeTimeLabel(dataLength,interval,start_time){
         timeArray = [];
         for (i=0; i<= dataLength; i++){
-                if (i % interval === 0){
-                  timeArray.push(i);
-                } else {
-                  timeArray.push('');
-                }
+            timeArray.push(start_time+i*interval);
         }
-      
-        if (isforward === false){
-          timeArrayNegative = timeArray.map(
-            (x) => (x === '')?'':x*-1
-          );
-          return timeArrayNegative.reverse();
-      
-        } else {
-          return timeArray
-        }
+        return timeArray
     }
     
-    
+
     function displayData(){
-    
-        var happy = [];
-        var angry = [];
-        var contempt = [];
-        var disgust = [];
-        var fear = [];
-        var neutral = [];
-        var sadness = [];
-        var surprise = [];
-        var avg_time_interval = 0;
-    
-        for (var i = 0; i < overall_data.length; i++){
-            angry.push(overall_data[i][1].angriness);
-            happy.push(overall_data[i][1].happiness);
-            contempt.push(overall_data[i][1].contempt);
-            disgust.push(overall_data[i][1].disgust);
-            fear.push(overall_data[i][1].fear);
-            neutral.push(overall_data[i][1].neutral);
-            sadness.push(overall_data[i][1].sadness);
-            surprise.push(overall_data[i][1].surprise);
-            avg_time_interval = (avg_time_interval*i + overall_data[i][0])/(i+1);
+
+        if (overall_data.length >=2){
+            var avg_time_interval = 0;
+
+            for (var i = 1; i < overall_data.length; i++){
+                
+                current_time_interval = overall_data[i][0] = overall_data[i-1][0];
+                avg_time_interval = (avg_time_interval*(i) + current_time_interval)/(i);
+                console.log(current_time_interval);
+            }
+
+            myChart.data.labels = makeTimeLabel(overall_data.length,avg_time_interval,overall_data[0][0]);
+            console.log(makeTimeLabel(overall_data.length,avg_time_interval,overall_data[0][0]));
+
+            myChart.data.datasets[0].data = angry;
+            myChart.data.datasets[1].data = happy;
+            myChart.data.datasets[2].data = contempt;
+            myChart.data.datasets[3].data = disgust;
+            myChart.data.datasets[4].data = fear;
+            myChart.data.datasets[5].data = neutral;
+            myChart.data.datasets[6].data = sadness;
+            myChart.data.datasets[7].data = surprise;
+
+            myChart.update();
         }
-        
+
+    }
+
+    
+
+
+
+    
+    function initialDisplay(){        
         
         var config = {
             type: 'line',
             data: {
-                labels: makeTimeLabel(overall_data.length,avg_time_interval,true),
+                //labels: makeTimeLabel(overall_data.length,avg_time_interval,true),
                 datasets: [{
                     label: "Angriness",
                     borderColor: window.chartColors.red,
@@ -234,11 +314,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
         };
     
-        var ctx = document.getElementById("myChart").getContext("2d");
-        window.myLine = new Chart(ctx, config);
+        var chart_ctx = document.getElementById("myChart").getContext("2d");
+        myChart = new Chart(chart_ctx, config);
     }
-    
-    
-
 });
 
